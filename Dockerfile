@@ -33,4 +33,5 @@ USER appuser
 
 EXPOSE 8800
 
-CMD ["sh", "-c", "python /app/scripts/app.py & cd /app/www && python -m http.server 8800 --bind 0.0.0.0"]
+CMD ["sh", "-c", "cd /app/www && python -m http.server 8800 --bind 0.0.0.0"]
+
