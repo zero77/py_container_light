@@ -1,4 +1,4 @@
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 # Install uv (ultra-fast Python package installer)
 RUN pip install --no-cache-dir uv
@@ -10,7 +10,7 @@ RUN mkdir -p /root/.cache/uv
 RUN uv pip install --system requests[socks] feedparser fake-useragent
 
 # Final stage
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 # Create non-root user with UID 1000 (matches docker-compose)
 RUN useradd -u 1000 -m appuser
