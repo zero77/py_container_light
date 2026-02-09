@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir uv
 RUN mkdir -p /root/.cache/uv
 
 # Install dependencies into system site-packages using uv
-RUN uv pip install --system requests feedparser fake-useragent
+RUN uv pip install --system requests[socks] feedparser fake-useragent
 
 # Final stage
 FROM python:3.12-slim
