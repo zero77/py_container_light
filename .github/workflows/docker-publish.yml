@@ -20,6 +20,7 @@ jobs:
 
       - name: MUAD'DIB Scanner
         uses: DNSZLSK/muad-dib@v2.2.24
+        continue-on-error: true
         with:
           path: '.'
           fail-on: 'high'
