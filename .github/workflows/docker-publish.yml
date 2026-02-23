@@ -43,6 +43,11 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 0
 
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
       - name: Push Docker image
         run: |
           docker push ${{ env.IMAGE }}
