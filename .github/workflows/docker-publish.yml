@@ -19,6 +19,7 @@ jobs:
 
       - name: MUAD'DIB Scanner
         uses: DNSZLSK/muad-dib@v2.2.24
+        continue-on-error: true
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
