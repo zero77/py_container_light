@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: MUAD'DIB Scanner
-        uses: DNSZLSK/muad-dib@v2.2.26
+        uses: DNSZLSK/muad-dib@master
         continue-on-error: true
         with:
           path: '.'
