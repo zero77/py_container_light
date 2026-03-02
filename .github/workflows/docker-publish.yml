@@ -37,7 +37,7 @@ jobs:
 
       # scan the freshly built image
       - name: MUAD'DIB scan
-        uses: docker://ghcr.io/chainguard-dev/muaddib:latest
+        uses: DNSZLSK/muad-dib@master
         continue-on-error: true
         with:
           args: scan ${{ env.IMAGE }}
