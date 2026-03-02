@@ -77,11 +77,11 @@ jobs:
       # ---------------------------
 
       - name: Upload SARIF to GitHub Security (repo scan)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
 
       - name: Upload SARIF to GitHub Security (image scan)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-image-results.sarif
