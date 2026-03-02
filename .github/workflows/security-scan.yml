@@ -23,7 +23,7 @@ jobs:
       # ---------------------------
 
       - name: Trivy filesystem scan (selected paths)
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.34.2
         with:
           scan-type: fs
           scan-ref: .
@@ -64,7 +64,7 @@ jobs:
           args: scan ${{ env.IMAGE }}
       
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.34.2
         with:
           image-ref: ${{ env.IMAGE }}
           format: sarif
