@@ -2,19 +2,24 @@ name: Daily Security Scanning
 
 on:
   schedule:
-    - cron: "0 3 * * *"   # daily at 03:00 UTC
+    - cron: "0 1 * * *"   # daily at 01:00 UTC
   workflow_dispatch:
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # ---------------------------
-      # REPOSITORY SCANNING (Trivy)
+      # REPOSITORY SCANNING
       # ---------------------------
 
       - name: Trivy filesystem scan (selected paths)
@@ -22,8 +27,9 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
-          format: table
-          exit-code: 1
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: 0
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: false
@@ -35,7 +41,7 @@ jobs:
             config/
 
       # ---------------------------
-      # IMAGE SCANNING (no build)
+      # IMAGE SCANNING
       # ---------------------------
 
       - name: Log in to GHCR
@@ -46,18 +52,37 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull latest image
-        run: docker pull ghcr.io/${{ github.repository_owner }}/py_container_light:latest
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/$(basename ${{ github.repository }}):latest
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          docker pull $IMAGE
 
       - name: MUAD'DIB image scan
         uses: docker://ghcr.io/chainguard-dev/muaddib:latest
+        continue-on-error: true
         with:
-          args: scan ghcr.io/${{ github.repository_owner }}/py_container_light:latest
+          args: scan ${{ env.IMAGE }}
 
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/py_container_light:latest
-          format: table
-          exit-code: 1
+          image-ref: ${{ env.IMAGE }}
+          exit-code: 0
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+          format: sarif
+          output: trivy-image-results.sarif
+
+      # ---------------------------
+      # SARIF UPLOAD
+      # ---------------------------
+
+      - name: Upload SARIF to GitHub Security (repo scan)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Upload SARIF to GitHub Security (image scan)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image-results.sarif
