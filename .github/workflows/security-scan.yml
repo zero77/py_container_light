@@ -1,0 +1,63 @@
+name: Daily Security Scanning
+
+on:
+  schedule:
+    - cron: "0 3 * * *"   # daily at 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------------------------
+      # REPOSITORY SCANNING (Trivy)
+      # ---------------------------
+
+      - name: Trivy filesystem scan (selected paths)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          exit-code: 1
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: false
+          path: |
+            requirements.txt
+            Dockerfile
+            src/
+            app/
+            config/
+
+      # ---------------------------
+      # IMAGE SCANNING (no build)
+      # ---------------------------
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull latest image
+        run: docker pull ghcr.io/${{ github.repository_owner }}/py_container_light:latest
+
+      - name: MUAD'DIB image scan
+        uses: docker://ghcr.io/chainguard-dev/muaddib:latest
+        with:
+          args: scan ghcr.io/${{ github.repository_owner }}/py_container_light:latest
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/py_container_light:latest
+          format: table
+          exit-code: 1
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
