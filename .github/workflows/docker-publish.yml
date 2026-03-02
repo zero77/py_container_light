@@ -18,14 +18,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: MUAD'DIB Scanner
-        uses: DNSZLSK/muad-dib@master
-        continue-on-error: true
-        with:
-          path: '.'
-          fail-on: 'high'
-          sarif: 'results.sarif'
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -40,20 +32,22 @@ jobs:
           docker build -t $IMAGE .
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-      - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@master
+      - name: Push Docker image
+        run: docker push ${{ env.IMAGE }}
+
+      # scan the freshly built image
+      - name: MUAD'DIB scan
+        uses: docker://ghcr.io/chainguard-dev/muaddib:latest
+        continue-on-error: true
+        with:
+          args: scan ${{ env.IMAGE }}
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.20.0
         with:
           image-ref: ${{ env.IMAGE }}
+          exit-code: 0
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
           format: sarif
           output: trivy-results.sarif
-          severity: HIGH,CRITICAL
-          exit-code: 0
-      
-      - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-results.sarif
-
-      - name: Push Docker image
-        run: |
-          docker push ${{ env.IMAGE }}
