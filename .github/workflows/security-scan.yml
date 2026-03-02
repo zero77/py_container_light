@@ -62,16 +62,15 @@ jobs:
         continue-on-error: true
         with:
           args: scan ${{ env.IMAGE }}
-
+      
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@0.20.0
         with:
           image-ref: ${{ env.IMAGE }}
-          exit-code: 0
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
           format: sarif
-          output: trivy-image-results.sarif
+          output: trivy-results.sarif
+          exit-code: 0
+          args: --severity CRITICAL,HIGH
 
       # ---------------------------
       # SARIF UPLOAD
