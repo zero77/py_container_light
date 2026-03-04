@@ -65,14 +65,14 @@ jobs:
         run: docker pull $IMAGE
 
 #https://github.com/DNSZLSK/muad-dib
-      - name: MUAD'DIB image scan
-        uses: DNSZLSK/muad-dib@master
+      - name: MUAD'DIB source scan
+        uses: DNSZLSK/muad-dib@v1
         continue-on-error: true
         with:
-          path: ${{ env.IMAGE }}
+          path: '.'
           fail-on: high
           sarif: muaddib-results.sarif
-      
+     
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@0.34.2
         with:
@@ -109,4 +109,4 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ github.workspace }}/muaddib-results.sarif
-          category: muaddib-image
+          category: muaddib-source
