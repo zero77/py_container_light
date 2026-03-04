@@ -64,11 +64,14 @@ jobs:
       - name: Pull image
         run: docker pull $IMAGE
 
+#https://github.com/DNSZLSK/muad-dib
       - name: MUAD'DIB image scan
         uses: DNSZLSK/muad-dib@master
         continue-on-error: true
         with:
-          args: scan ${{ env.IMAGE }}
+          path: ${{ env.IMAGE }}
+          fail-on: high
+          sarif: muaddib-results.sarif
       
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@0.34.2
@@ -82,19 +85,28 @@ jobs:
       # ---------------------------
       # SARIF UPLOAD
       # ---------------------------
-
+      
       - name: Upload SARIF to GitHub Security (repo scan)
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ github.workspace }}/trivy-results.sarif
-
+          category: trivy-fs
+      
+      - name: Upload SARIF to GitHub Security (Dockerfile config)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ github.workspace }}/trivy-config-results.sarif
+          category: trivy-config
+      
       - name: Upload SARIF to GitHub Security (image scan)
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ github.workspace }}/trivy-image-results.sarif
           wait-for-processing: true
-
-      - name: Upload SARIF to GitHub Security (Dockerfile config)
+          category: trivy-image
+      
+      - name: Upload SARIF to GitHub Security (MUAD'DIB)
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: ${{ github.workspace }}/trivy-config-results.sarif
+          sarif_file: ${{ github.workspace }}/muaddib-results.sarif
+          category: muaddib-image
