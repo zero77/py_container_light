@@ -66,7 +66,7 @@ jobs:
 
 #https://github.com/DNSZLSK/muad-dib
       - name: MUAD'DIB source scan
-        uses: DNSZLSK/muad-dib@v1
+        uses: DNSZLSK/muad-dib@master
         continue-on-error: true
         with:
           path: '.'
