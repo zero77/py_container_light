@@ -4,10 +4,17 @@ on:
   schedule:
     - cron: "0 1 * * *"   # daily at 01:00 UTC
   workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
+
+    env:
+      IMAGE: ghcr.io/zero77/py_container_light:latest
 
     permissions:
       contents: read
@@ -21,8 +28,8 @@ jobs:
       # ---------------------------
       # REPOSITORY SCANNING
       # ---------------------------
-
-      - name: Trivy filesystem scan (selected paths)
+      
+      - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@0.34.2
         with:
           scan-type: fs
@@ -33,29 +40,29 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: false
-          path: |
-            requirements.txt
-            Dockerfile
-            src/
-            app/
-            config/
+
+      - name: Trivy Dockerfile misconfiguration scan
+        uses: aquasecurity/trivy-action@0.34.2
+        with:
+          scan-type: config
+          scan-ref: Dockerfile
+          format: sarif
+          output: trivy-config-results.sarif
+          exit-code: 0
 
       # ---------------------------
       # IMAGE SCANNING
       # ---------------------------
 
-      - name: Log in to GHCR
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull latest image
-        run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/$(basename ${{ github.repository }}):latest
-          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
-          docker pull $IMAGE
+      - name: Pull image
+        run: docker pull $IMAGE
 
       - name: MUAD'DIB image scan
         uses: DNSZLSK/muad-dib@master
@@ -63,14 +70,14 @@ jobs:
         with:
           args: scan ${{ env.IMAGE }}
       
-      - name: Trivy image scan
+      - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@0.34.2
         with:
+          scan-type: image
           image-ref: ${{ env.IMAGE }}
           format: sarif
-          output: trivy-results.sarif
-          exit-code: 0
-          args: --severity CRITICAL,HIGH
+          output: trivy-image-results.sarif
+          severity: HIGH,CRITICAL
 
       # ---------------------------
       # SARIF UPLOAD
@@ -79,9 +86,15 @@ jobs:
       - name: Upload SARIF to GitHub Security (repo scan)
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: trivy-results.sarif
+          sarif_file: ${{ github.workspace }}/trivy-results.sarif
 
       - name: Upload SARIF to GitHub Security (image scan)
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: trivy-image-results.sarif
+          sarif_file: ${{ github.workspace }}/trivy-image-results.sarif
+          wait-for-processing: true
+
+      - name: Upload SARIF to GitHub Security (Dockerfile config)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ github.workspace }}/trivy-config-results.sarif
