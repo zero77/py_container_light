@@ -30,7 +30,7 @@ jobs:
       # ---------------------------
       
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.34.2
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scan-ref: .
@@ -42,7 +42,7 @@ jobs:
           ignore-unfixed: false
 
       - name: Trivy Dockerfile misconfiguration scan
-        uses: aquasecurity/trivy-action@0.34.2
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: config
           scan-ref: Dockerfile
@@ -74,7 +74,7 @@ jobs:
           sarif: muaddib-results.sarif
      
       - name: Run Trivy image scan
-        uses: aquasecurity/trivy-action@0.34.2
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: image
           image-ref: ${{ env.IMAGE }}
