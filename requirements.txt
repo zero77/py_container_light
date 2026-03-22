@@ -1,3 +1,5 @@
 requests[socks]
 feedparser
 fake-useragent
+pip
+uv
