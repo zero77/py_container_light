@@ -3,3 +3,10 @@ feedparser
 fake-useragent
 pip
 uv
+lxml
+certifi
+charset-normalizer
+idna
+PySocks
+sgmllib3k
+urllib3
