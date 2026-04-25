@@ -19,6 +19,8 @@ updates:
     allow:
       - dependency-type: "all"
         update-type: "version-update:semver-minor"
+    commit-message:
+      include: "digest"
 
   # 3. GitHub Actions workflow updates
   - package-ecosystem: "github-actions"
