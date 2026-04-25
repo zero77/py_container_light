@@ -16,6 +16,9 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    allow:
+      - dependency-type: "all"
+        update-type: "version-update:semver-minor"
 
   # 3. GitHub Actions workflow updates
   - package-ecosystem: "github-actions"
