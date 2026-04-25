@@ -2,27 +2,19 @@
 # package ecosystems to update and where the package manifests are located.
 # Please see the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 updates:
-  # 1. Python dependencies (requirements.txt or pyproject.toml)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "daily"
 
-  # 2. Dockerfile base image updates
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
-    allow:
-      - dependency-type: "all"
-        update-type: "version-update:semver-minor"
 
-  # 3. GitHub Actions workflow updates
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
-
