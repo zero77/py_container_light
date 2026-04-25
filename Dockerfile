@@ -1,5 +1,5 @@
 #https://hub.docker.com/_/python/tags?name=slim
-FROM python:3.14.3-slim AS builder
+FROM python:3.14-slim AS builder
 
 # Install uv (ultra-fast Python package installer)
 RUN pip install --no-cache-dir uv
