@@ -73,6 +73,6 @@ jobs:
         run: cosign sign --yes ${{ env.IMAGE_NAME }}:latest
 
       - name: Generate SLSA provenance
-        uses: slsa-framework/slsa-github-generator@v2.0.0
+        uses: slsa-framework/slsa-github-generator/actions/generator@v2.0.0
         with:
           artifact_path: sbom.json
