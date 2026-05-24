@@ -15,8 +15,11 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build:
+  build-and-scan:
     runs-on: ubuntu-latest
+
+    outputs:
+      sbom-path: sbom.json
 
     steps:
       - uses: actions/checkout@v6
@@ -73,7 +76,12 @@ jobs:
       - name: Sign image
         run: cosign sign --yes ${{ env.IMAGE_NAME }}:latest
 
-      - name: Generate SLSA provenance
-        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
-        with:
-          artifact_path: sbom.json
+  slsa-provenance:
+    needs: build-and-scan
+    permissions:
+      id-token: write
+      contents: write
+
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      artifact_path: sbom.json
