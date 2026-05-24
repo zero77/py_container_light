@@ -40,10 +40,11 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Generate SBOM (Syft)
-        uses: anchore/syft-action@v0.16.0
+        uses: anchore/sbom-action@v0.17.0
         with:
           image: ${{ env.IMAGE_NAME }}:latest
-          output: "sbom.json"
+          format: cyclonedx-json
+          output-file: sbom.json
 
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
@@ -52,10 +53,18 @@ jobs:
           path: sbom.json
 
       - name: Scan image with Grype (HIGH+CRITICAL)
-        uses: anchore/grype-action@v0.9.0
+        uses: anchore/scan-action@v3
         with:
           image: ${{ env.IMAGE_NAME }}:latest
-          fail-on-severity: high
+          fail-build: true
+          severity-cutoff: high
+          output-format: sarif
+          output-file: grype.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: grype.sarif
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3.5.0
