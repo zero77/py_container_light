@@ -12,12 +12,11 @@ permissions:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - uses: actions/checkout@v6
@@ -54,7 +53,7 @@ jobs:
           name: sbom
           path: sbom.json
 
-      - name: Scan image with Grype (HIGH+CRITICAL, blocking)
+      - name: Scan image with Grype (HIGH+CRITICAL)
         uses: anchore/scan-action@v3
         with:
           image: ${{ env.IMAGE_NAME }}:latest
@@ -64,7 +63,7 @@ jobs:
           output-file: grype.sarif
 
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: grype.sarif
 
@@ -75,6 +74,6 @@ jobs:
         run: cosign sign --yes ${{ env.IMAGE_NAME }}:latest
 
       - name: Generate SLSA provenance
-        uses: slsa-framework/slsa-github-generator/actions/generator@v2.0.0
+        uses: slsa-framework/slsa-github-generator/.github/actions/generator@v2.0.0
         with:
           artifact_path: sbom.json
