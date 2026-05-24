@@ -67,7 +67,7 @@ jobs:
           sarif_file: grype.sarif
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.5.0
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: Sign image
         run: cosign sign --yes ${{ env.IMAGE_NAME }}:latest
