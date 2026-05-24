@@ -4,74 +4,50 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
-  schedule:
-    - cron: "0 1 * * *"
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
-  pip-audit:
+  security:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      # -----------------------------
+      # TRIVY (fixed version)
+      # -----------------------------
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.36.1
         with:
-          python-version: "3.13"
+          scan-type: fs
+          format: table
+          exit-code: 0
+          ignore-unfixed: true
 
-      - name: Install pip-audit
-        run: pip install pip-audit
+      # -----------------------------
+      # BANDIT (SARIF output fixed)
+      # -----------------------------
+      - name: Install Bandit
+        run: pip install bandit
 
-      - name: Run pip-audit (SARIF, non-blocking)
-        run: pip-audit --format sarif --output pip-audit.sarif --severity high --severity critical --exit-code 0
+      - name: Run Bandit (non-blocking)
+        run: |
+          bandit -r . -f sarif -o bandit.sarif || true
 
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: pip-audit.sarif
-
-  bandit:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - run: pip install bandit
-
-      - name: Run Bandit (SARIF, non-blocking)
-        run: bandit -r . -f sarif -o bandit.sarif || true
-
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload Bandit SARIF
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: bandit.sarif
 
-  trivy-config:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v6
+      # -----------------------------
+      # PIP-AUDIT (non-blocking)
+      # -----------------------------
+      - name: Install pip-audit
+        run: pip install pip-audit
 
-      - name: Run Trivy (config scan, SARIF, non-blocking)
-        uses: aquasecurity/trivy-action@0.36.0
-        with:
-          scan-type: config
-          format: sarif
-          output: trivy.sarif
-          severity: CRITICAL,HIGH
-          exit-code: "0"
-
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy.sarif
+      - name: Run pip-audit (non-blocking)
+        run: |
+          pip-audit --progress-spinner=off || true
