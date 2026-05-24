@@ -1,115 +1,57 @@
-name: Daily Security Scanning
+name: Security Scan
 
 on:
-  schedule:
-    - cron: "0 1 * * *"   # daily at 01:00 UTC
-  workflow_dispatch:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  schedule:
+    - cron: "0 1 * * *"   # daily at 01:00 UTC
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
-  security-scan:
+  pip-audit:
     runs-on: ubuntu-latest
-
-    env:
-      IMAGE: ghcr.io/zero77/py_container_light:latest
-
-    permissions:
-      contents: read
-      packages: read
-      security-events: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      # ---------------------------
-      # REPOSITORY SCANNING
-      # ---------------------------
-      
-      - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.36.0
+      - uses: actions/setup-python@v5
         with:
-          scan-type: fs
-          scan-ref: .
-          format: sarif
-          output: trivy-results.sarif
-          exit-code: 0
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: false
-          limit-severities-for-sarif: true
+          python-version: "3.13"
 
-      - name: Trivy Dockerfile misconfiguration scan
-        uses: aquasecurity/trivy-action@v0.36.0
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit (HIGH+CRITICAL only)
+        run: pip-audit --severity high --severity critical --strict
+
+  bandit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install bandit
+      - run: bandit -r . -ll
+
+  hadolint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+  trivy-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: config
-          scan-ref: Dockerfile
-          format: sarif
-          output: trivy-config-results.sarif
-          exit-code: 0
-          args: --severity HIGH,CRITICAL
-
-      # ---------------------------
-      # IMAGE SCANNING
-      # ---------------------------
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull image
-        run: docker pull $IMAGE
-
-#https://github.com/DNSZLSK/muad-dib
-      - name: MUAD'DIB source scan
-        uses: DNSZLSK/muad-dib@master
-        continue-on-error: true
-        with:
-          path: '.'
-          fail-on: high
-          sarif: muaddib-results.sarif
-     
-      - name: Run Trivy image scan
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: image
-          image-ref: ${{ env.IMAGE }}
-          format: sarif
-          output: trivy-image-results.sarif
-          severity: HIGH,CRITICAL
-          limit-severities-for-sarif: true
-
-      # ---------------------------
-      # SARIF UPLOAD
-      # ---------------------------
-      
-      - name: Upload SARIF to GitHub Security (repo scan)
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: ${{ github.workspace }}/trivy-results.sarif
-          category: trivy-fs
-      
-      - name: Upload SARIF to GitHub Security (Dockerfile config)
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: ${{ github.workspace }}/trivy-config-results.sarif
-          category: trivy-config
-      
-      - name: Upload SARIF to GitHub Security (image scan)
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: ${{ github.workspace }}/trivy-image-results.sarif
-          wait-for-processing: true
-          category: trivy-image
-      
-      - name: Upload SARIF to GitHub Security (MUAD'DIB)
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: ${{ github.workspace }}/muaddib-results.sarif
-          category: muaddib-source
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
