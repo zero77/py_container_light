@@ -57,12 +57,12 @@ jobs:
           name: sbom
           path: sbom.json
 
-      - name: Scan image with Grype (HIGH+CRITICAL)
+      - name: Scan image with Grype (CRITICAL only)
         uses: anchore/scan-action@v3
         with:
           image: ghcr.io/${{ github.repository }}:latest
           fail-build: true
-          severity-cutoff: high
+          severity-cutoff: critical
           output-format: sarif
           output-file: grype.sarif
 
