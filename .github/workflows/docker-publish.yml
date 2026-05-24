@@ -11,15 +11,11 @@ permissions:
   id-token: write
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-scan:
     runs-on: ubuntu-latest
-
-    outputs:
-      image-ref: ${{ steps.push.outputs.digest }}
 
     steps:
       - uses: actions/checkout@v6
@@ -41,14 +37,14 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
           provenance: false
 
       - name: Generate SBOM (Syft)
         uses: anchore/sbom-action@v0.24.0
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
+          image: ghcr.io/${{ github.repository }}:latest
           format: cyclonedx-json
           output-file: sbom.json
 
@@ -61,7 +57,7 @@ jobs:
       - name: Scan image with Grype (HIGH+CRITICAL)
         uses: anchore/scan-action@v3
         with:
-          image: ${{ env.IMAGE_NAME }}:latest
+          image: ghcr.io/${{ github.repository }}:latest
           fail-build: true
           severity-cutoff: high
           output-format: sarif
@@ -76,7 +72,7 @@ jobs:
         uses: sigstore/cosign-installer@v4.1.2
 
       - name: Sign image
-        run: cosign sign --yes ${{ env.IMAGE_NAME }}:latest
+        run: cosign sign --yes ghcr.io/${{ github.repository }}:latest
 
   slsa-provenance:
     needs: build-and-scan
@@ -86,4 +82,4 @@ jobs:
 
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.0.0
     with:
-      image: ${{ env.IMAGE_NAME }}:latest
+      image: ghcr.io/${{ github.repository }}:latest
