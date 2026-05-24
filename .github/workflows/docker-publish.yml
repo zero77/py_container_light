@@ -17,6 +17,9 @@ jobs:
   build-and-scan:
     runs-on: ubuntu-latest
 
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+
     steps:
       - uses: actions/checkout@v6
 
@@ -76,10 +79,14 @@ jobs:
 
   slsa-provenance:
     needs: build-and-scan
+
     permissions:
+      actions: read
+      contents: read
       id-token: write
-      contents: write
+      packages: write
 
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.0.0
     with:
-      image: ghcr.io/${{ github.repository }}:latest
+      image: ghcr.io/${{ github.repository }}
+      digest: ${{ needs.build-and-scan.outputs.digest }}
