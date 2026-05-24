@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: "0 1 * * *"   # daily at 01:00 UTC
+    - cron: "0 3 * * *"
 
 permissions:
   contents: read
@@ -25,8 +25,13 @@ jobs:
       - name: Install pip-audit
         run: pip install pip-audit
 
-      - name: Run pip-audit (HIGH+CRITICAL only)
-        run: pip-audit --severity high --severity critical --strict
+      - name: Run pip-audit (SARIF)
+        run: pip-audit --format sarif --output pip-audit.sarif --severity high --severity critical
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pip-audit.sarif
 
   bandit:
     runs-on: ubuntu-latest
@@ -36,22 +41,28 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install bandit
-      - run: bandit -r . -ll
+      - run: bandit -r . -f sarif -o bandit.sarif
 
-  hadolint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: hadolint/hadolint-action@v3.1.0
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          dockerfile: Dockerfile
+          sarif_file: bandit.sarif
 
   trivy-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: aquasecurity/trivy-action@0.36.0
+
+      - name: Run Trivy (config scan)
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: config
+          format: sarif
+          output: trivy.sarif
+          severity: CRITICAL,HIGH
           exit-code: "1"
-          severity: "CRITICAL,HIGH"
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy.sarif
