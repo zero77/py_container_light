@@ -40,7 +40,7 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Generate SBOM (Syft)
-        uses: anchore/sbom-action@v0.17.0
+        uses: anchore/sbom-action@v0.24.0
         with:
           image: ${{ env.IMAGE_NAME }}:latest
           format: cyclonedx-json
