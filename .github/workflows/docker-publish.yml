@@ -55,7 +55,7 @@ jobs:
           path: sbom.json
 
       - name: Scan image with Grype (non-blocking)
-        uses: anchore/scan-action@v3
+        uses: anchore/scan-action@v7
         with:
           image: ghcr.io/${{ github.repository }}:latest
           fail-build: false
