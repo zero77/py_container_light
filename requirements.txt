@@ -10,3 +10,4 @@ idna
 PySocks
 sgmllib3k
 urllib3
+stem
