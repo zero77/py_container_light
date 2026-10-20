@@ -1,6 +1,6 @@
 #https://hub.docker.com/_/python/tags?name=slim
 # Stage 1: Build Python deps
-FROM python:3.14-slim AS builder
+FROM python:3.15-slim AS builder
 
 RUN pip install --no-cache-dir uv
 RUN mkdir -p /root/.cache/uv
@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN uv pip install --system -r requirements.txt
 
 # Stage 2: Final runtime image
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tor \
